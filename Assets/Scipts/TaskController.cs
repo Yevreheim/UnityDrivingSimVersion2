@@ -16,26 +16,32 @@ public class TaskController : MonoBehaviour
     private const string BButtonPressed = "B Pressed";
     private const string XButtonPressed = "X Pressed";
     private const string YButtonPressed = "Y Pressed";
-    private const string ButtonResponse = "Button Response to Auditory Response";
+    private const string AuditoryButtonResponse = "Button Response to Auditory Distraction";
+    private const string VisualButtonResponse = "Button Response to Visual Distraction";
     private const string PlayerTag = "MainCamera";
     private const float PositionTransformation = 50f;
+    
     private float responseTime;
     private float globalActivityTimer;
+
     private string fileExportName;
     private string fileExportLocation;
+
     private StreamWriter fileStreamWriter;
     private StreamReader fileStreamReader;
+    private List<Planes> horizontalPlaneList;
+
     private GameObject[] textDistractions;
     private GameObject[] lanes;
     private GameObject mainPlayer;
-    private List<Planes> horizontalPlaneList;
-
     private GameObject clockUiObject;
+    private GameObject instructionObject;
 
     // Start is called before the first frame update
     public void Start()
     {
         SetupPlayerInformation();
+        SetupInstructionObject();
         SetupTimerInformation();
         SetupFileRelease();
         SetupTextDistractions();
@@ -46,6 +52,7 @@ public class TaskController : MonoBehaviour
     public void Update()
     {
         UpdateTimer();
+        UpdateInstructions();
         UpdatePlanePositionFromPlayer();
         TextDistractionPlayerResponse();
     }
@@ -57,15 +64,23 @@ public class TaskController : MonoBehaviour
         textDistractions[randomAnimalDesignation].SetActive(true);
     }
 
-    private void EnableVisualBalloonDistraction()
+    private void EnableVisualBalloonDistraction(Planes horizontalPlane)
     {
-
+        horizontalPlane.Balloon.SetActive(true);
+        horizontalPlane.BalloonIsShowing = true;
+        responseTime = 0.0f;
     }
 
     private void SetupPlayerInformation()
     {
         mainPlayer = GameObject.FindGameObjectWithTag(PlayerTag);
     }    
+    
+    private void SetupInstructionObject()
+    {
+        instructionObject = GameObject.FindGameObjectWithTag("Instructions");
+        instructionObject.SetActive(false);
+    }
 
     private void SetupTimerInformation()
     {
@@ -84,7 +99,6 @@ public class TaskController : MonoBehaviour
         using (fileStreamWriter){
             fileStreamWriter.WriteLine(categoryLine);
         }
-
     }
 
     private void SetupTextDistractions()
@@ -133,11 +147,43 @@ public class TaskController : MonoBehaviour
         }
     }
 
+    private void UpdateInstructions(){
+        if (Input.GetKey(KeyCode.I)){
+            if (instructionObject.activeSelf)
+            {
+                instructionObject.SetActive(false);
+                Thread.Sleep(100);
+            }
+            else 
+            {
+                instructionObject.SetActive(true);
+                Thread.Sleep(100);
+            }
+        }
+    }
+
     private void UpdatePlanePositionFromPlayer(){
         foreach(Planes planeObject in horizontalPlaneList)
         {
             if (mainPlayer.transform.position.z > (planeObject.HorizontalPlane.transform.position.z + 2.5)) {
                 planeObject.HorizontalPlane.transform.position = new Vector3(0,0,(planeObject.HorizontalPlane.transform.position.z + 50));
+            }
+        }
+    }
+
+    private void BalloonVisualDistractionResponse()
+    {
+        foreach (Planes p in horizontalPlaneList){
+            if (p.BalloonIsShowing){
+                if (Input.GetKey(KeyCode.Joystick1Button0) ||
+                    Input.GetKey(KeyCode.Joystick1Button1) ||
+                    Input.GetKey(KeyCode.Joystick1Button2) ||
+                    Input.GetKey(KeyCode.Joystick1Button3)){
+                        p.Balloon.SetActive(false);
+                        p.BalloonIsShowing = false;
+                        TaskWriter(VisualButtonResponse, responseTime.ToString(), globalActivityTimer.ToString());
+                        Thread.Sleep(100);
+                    }
             }
         }
     }
@@ -148,25 +194,25 @@ public class TaskController : MonoBehaviour
         //Response
         if (Input.GetKey(KeyCode.JoystickButton0) && textDistractions[0].activeSelf == true){
             Debug.Log(AButtonPressed);
-            TaskWriter(ButtonResponse,responseTime.ToString(),globalActivityTimer.ToString());
+            TaskWriter(AuditoryButtonResponse,responseTime.ToString(),globalActivityTimer.ToString());
             textDistractions[0].SetActive(false);
             Thread.Sleep(100);
         }
         if (Input.GetKey(KeyCode.JoystickButton1) && textDistractions[1].activeSelf == true){
             Debug.Log(BButtonPressed);
-            TaskWriter(ButtonResponse,responseTime.ToString(),globalActivityTimer.ToString());
+            TaskWriter(AuditoryButtonResponse,responseTime.ToString(),globalActivityTimer.ToString());
             textDistractions[1].SetActive(false);
             Thread.Sleep(100);
         }
         if (Input.GetKey(KeyCode.JoystickButton2) && textDistractions[2].activeSelf == true){
             Debug.Log(XButtonPressed);
-            TaskWriter(ButtonResponse,responseTime.ToString(),globalActivityTimer.ToString());
+            TaskWriter(AuditoryButtonResponse,responseTime.ToString(),globalActivityTimer.ToString());
             textDistractions[2].SetActive(false);
             Thread.Sleep(100);
         }
         if (Input.GetKey(KeyCode.JoystickButton3) && textDistractions[3].activeSelf == true){
             Debug.Log(YButtonPressed);
-            TaskWriter(ButtonResponse,responseTime.ToString(),globalActivityTimer.ToString());
+            TaskWriter(AuditoryButtonResponse,responseTime.ToString(),globalActivityTimer.ToString());
             textDistractions[3].SetActive(false);
             Thread.Sleep(100);
         }

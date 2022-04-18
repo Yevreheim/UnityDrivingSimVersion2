@@ -5,11 +5,12 @@ using UnityEngine.UI;
 using UnityEngine.UIElements;
 using UnityEngine.TextCore;
 
-public class Planes 
+public class Planes
 {
     public List<GameObject> Cars = new List<GameObject>();
     public GameObject HorizontalPlane;
     public GameObject Balloon;
+    public bool BalloonIsShowing;
     private const string CarTag = "Car";
     private const string BalloonTag = "Balloon";
 
