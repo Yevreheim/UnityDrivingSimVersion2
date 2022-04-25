@@ -39,7 +39,7 @@ public class TaskCounter
         _singleTaskVisual = new TaskObject("Visual",TaskEnum.Single);
         _singleTaskLaneDeviation = new TaskObject("Lane Deviation",TaskEnum.Single);
         _singleTaskAuditory = new TaskObject("Auditory",TaskEnum.Single);
-        _singleTaskEmergencyBraking= new TaskObject("Emergency",TaskEnum.Single);
+        _singleTaskEmergencyBraking= new TaskObject("Emergency Braking",TaskEnum.Single);
 
         //104 Tasks
         _dualTaskLaneDeviationAuditoryForward = new TaskObject("LaneDeviationAuditoryForward", TaskEnum.Double);
@@ -151,20 +151,20 @@ public class TaskCounter
 
     public TaskObject SingleTaskLaneDeviation
     {
-        get => _singleTaskVisual;
-        set => _singleTaskVisual = value;
+        get => _singleTaskLaneDeviation;
+        set => _singleTaskLaneDeviation = value;
     }
 
     public TaskObject SingleTaskAuditory
     {
-        get => _singleTaskVisual;
-        set => _singleTaskVisual = value;
+        get => _singleTaskAuditory;
+        set => _singleTaskAuditory = value;
     }
 
-    public TaskObject SingleTaskBraking
+    public TaskObject SingleTaskEmergencyBraking
     {
-        get => _singleTaskVisual;
-        set => _singleTaskVisual = value;
+        get => _singleTaskEmergencyBraking;
+        set => _singleTaskEmergencyBraking = value;
     }
 
     public TaskObject DualTaskLaneDeviationAuditoryForward

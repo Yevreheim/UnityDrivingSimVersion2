@@ -42,6 +42,7 @@ public class TaskController : MonoBehaviour
     
     private float responseTime;
     private float globalActivityTimer;
+    private float nextTaskTimer;
     private float defaultCurrentPlayerPositionX;
 
     private string fileExportName;
@@ -56,13 +57,16 @@ public class TaskController : MonoBehaviour
     private bool enableProgramToStart;
     private bool userHasCrashed;
     private bool userHasBraked;
+    private bool isTaskCurrentlyHappening;
+    private bool signalForVisualBalloonTask;
+    private bool signalForEmergencyBraking;
 
     private StreamWriter fileStreamWriter;
     private StreamReader fileStreamReader;
     private List<Planes> horizontalPlaneList;
 
     private TaskCounter taskCounterController;
-
+    private TaskEnum currentTaskEnum;
     private GameObject[] textDistractions;
     private GameObject[] lanes;
     private GameObject[] audioSources;
@@ -132,14 +136,98 @@ public class TaskController : MonoBehaviour
 
     private void TaskScheduler()
     {
-        var task = taskCounterController.AssignTask();
-        if (task != null)
-        {
-            //do thing
+        if (!isTaskCurrentlyHappening && nextTaskTimer > TimeBetweenTasks){
+            var task = taskCounterController.AssignTask();
+            if (task != null)
+            {
+                isTaskCurrentlyHappening = true;
+                //do thing
+                if (task == taskCounterController.SingleTaskAuditory){
+                    EnableAudioDistraction();
+                }
+                else if (task == taskCounterController.SingleTaskLaneDeviation){
+                    EnableLaneDeviationDistraction();
+                }
+                else if (task == taskCounterController.SingleTaskVisual){
+                    signalForVisualBalloonTask = true;
+                }
+                else if (task == taskCounterController.SingleTaskEmergencyBraking){
+                    signalForEmergencyBraking = true;
+                }
+                else if (task == taskCounterController.DualTaskLaneDeviationVisualForward){
+                    EnableLaneDeviationDistraction();
+                    SecondaryTaskPush(SecondaryTaskEnum.Visual);
+                }
+                else if (task == taskCounterController.DualTaskLaneDeviationVisualBackward){
+                    signalForVisualBalloonTask = true;
+                    SecondaryTaskPush(SecondaryTaskEnum.LaneDeviation);
+
+                }
+                else if (task == taskCounterController.DualTaskLaneDeviationAuditoryForward){
+                    EnableLaneDeviationDistraction();
+                    SecondaryTaskPush(SecondaryTaskEnum.Auditory);
+                }
+                else if (task == taskCounterController.DualTaskLaneDeviationAuditoryBackward){
+                    EnableAudioDistraction();
+                    SecondaryTaskPush(SecondaryTaskEnum.LaneDeviation);
+                }
+                else if (task == taskCounterController.DualTaskEmergencyBrakingVisualForward){
+                    signalForEmergencyBraking = true;
+                    SecondaryTaskPush(SecondaryTaskEnum.Visual);
+                }
+                else if (task == taskCounterController.DualTaskEmergencyBrakingVisualBackward){
+                    signalForVisualBalloonTask = true;
+                    SecondaryTaskPush(SecondaryTaskEnum.EmergencyBraking);
+                }   
+                else if (task == taskCounterController.DualTaskEmergencyBrakingAuditoryForward){
+                    signalForEmergencyBraking = true;
+                    SecondaryTaskPush(SecondaryTaskEnum.Auditory);
+                }
+                else if (task == taskCounterController.DualTaskEmergencyBrakingAuditoryBackward){
+                    EnableAudioDistraction();
+                    SecondaryTaskPush(SecondaryTaskEnum.EmergencyBraking);
+                }
+                else if (task == taskCounterController.DualTaskLaneDeviationVisualSimultaneous){
+                    EnableLaneDeviationDistraction();
+                    signalForVisualBalloonTask = true;
+                }
+                else if (task == taskCounterController.DualTaskLaneDeviationAuditorySimultaneous){
+                    EnableLaneDeviationDistraction();
+                    EnableAudioDistraction();
+                }
+                else if (task == taskCounterController.DualTaskEmergencyBrakingVisualSimultaneous){
+                    signalForEmergencyBraking = true;
+                    signalForVisualBalloonTask = true;
+                }
+                else if (task == taskCounterController.DualTaskEmergencyBrakingAuditorySimultaneous){
+                    signalForEmergencyBraking = true;
+                    EnableAudioDistraction();
+                }
+            }
+            else{
+                Debug.Log("Program Finished");
+                Application.Quit();
+            }
         }
-        else{
-            Debug.Log("Program Finished");
-            Application.Quit();
+  
+    }
+
+    private void SecondaryTaskPush(SecondaryTaskEnum taskEnum){
+        if (taskEnum == SecondaryTaskEnum.Auditory)
+        {
+
+        }
+        else if (taskEnum == SecondaryTaskEnum.Visual)
+        {
+
+        }
+        else if (taskEnum == SecondaryTaskEnum.LaneDeviation)
+        {
+
+        }
+        else if (taskEnum == SecondaryTaskEnum.EmergencyBraking)
+        {
+
         }
     }
 
@@ -227,6 +315,7 @@ public class TaskController : MonoBehaviour
                 deviatonDirection = -TaskDeviationSpeed;
                 if (player.transform.position.x > defaultCurrentPlayerPositionX){
                     enableTaskDeviationMovement = false;
+                    nextTaskTimer = 0.0f;
                     Debug.Log("Stopping Deviation");
                     TaskWriter(LaneDeviationResponse, responseTime.ToString(),globalActivityTimer.ToString());
                 }
@@ -237,6 +326,7 @@ public class TaskController : MonoBehaviour
                 deviatonDirection = TaskDeviationSpeed;
                 if (player.transform.position.x < defaultCurrentPlayerPositionX){
                     enableTaskDeviationMovement = false;
+                    nextTaskTimer = 0.0f;
                     Debug.Log("Stopping Deviation");
                     TaskWriter(LaneDeviationResponse, responseTime.ToString(),globalActivityTimer.ToString());
                 }
@@ -267,6 +357,7 @@ public class TaskController : MonoBehaviour
     {
         globalActivityTimer = 0.0f;
         responseTime = 0.0f;
+        nextTaskTimer = 0.0f;
         clockUiObject = GameObject.FindWithTag("Clock");
         clockUiObject.SetActive(false);
     }
@@ -292,10 +383,6 @@ public class TaskController : MonoBehaviour
             textDistraction.GetComponent<Text>().text = BlankText;
             textDistraction.SetActive(false);
         }
-        // textDistractions[0].GetComponent<Text>().text = "CarHonk (A)";
-        // textDistractions[1].GetComponent<Text>().text = "Dog (B)";
-        // textDistractions[2].GetComponent<Text>().text = "Cat (X)";
-        // textDistractions[3].GetComponent<Text>().text = "Chicken (Y)";
 
         textDistractions[0].GetComponent<Text>().text = "";
         textDistractions[1].GetComponent<Text>().text = "";
@@ -327,6 +414,7 @@ public class TaskController : MonoBehaviour
         clockUiObject.GetComponent<Text>().text = globalActivityTimer.ToString("0.00") + " seconds";
         globalActivityTimer += Time.deltaTime;
         responseTime += Time.deltaTime;
+        nextTaskTimer += Time.deltaTime;
     }
 
     private void UpdateInstructions(){
@@ -351,6 +439,16 @@ public class TaskController : MonoBehaviour
                 planeObject.HorizontalPlane.transform.position = new Vector3(0,0,(planeObject.HorizontalPlane.transform.position.z + 50));
                 planeObject.ResetCarPosition();
                 //Could Insert task here
+                //Visual Balloon Task
+                if (signalForVisualBalloonTask){
+                    signalForVisualBalloonTask = false;
+                    EnableVisualBalloonDistraction(planeObject);
+                }
+                //Emergency Braking
+                if (signalForEmergencyBraking){
+                    signalForEmergencyBraking = false;
+                    EnableMovingCarDistraction(planeObject);
+                }
             }
         }
     }
@@ -370,6 +468,8 @@ public class TaskController : MonoBehaviour
                             balloonVisualDistractionObject.SetActive(false);
                             enableVisualBalloonTask = false;
                             TaskWriter(VisualButtonResponse, responseTime.ToString(), globalActivityTimer.ToString());
+                            nextTaskTimer = 0.0f;
+                            isTaskCurrentlyHappening = false;
                             Debug.Log("Response to Balloon");
                             Thread.Sleep(100);
                     }
@@ -432,6 +532,8 @@ public class TaskController : MonoBehaviour
                     {
                         if (!MainController.IsObjectAccelerating){
                             userHasBraked = true;
+                            nextTaskTimer = 0.0f;
+                            isTaskCurrentlyHappening = false;
                             TaskWriter(MovingCarBreakResponse,responseTime.ToString(),globalActivityTimer.ToString());
                         }
                     }
@@ -440,6 +542,8 @@ public class TaskController : MonoBehaviour
                         if (MainController.IsObjectAccelerating){
                             userHasCrashed = true;
                             timesUserHasCrashed++;
+                            nextTaskTimer = 0.0f;
+                            isTaskCurrentlyHappening = false;
                             TaskWriter(MovingCarCrashResponse,responseTime.ToString(),globalActivityTimer.ToString());
                             enableTaskMovingCar = false;
                         }
@@ -457,24 +561,32 @@ public class TaskController : MonoBehaviour
             Debug.Log(AButtonPressed);
             TaskWriter(AuditoryButtonResponse,responseTime.ToString(),globalActivityTimer.ToString());
             textDistractions[0].SetActive(false);
+            isTaskCurrentlyHappening = false;
+            nextTaskTimer = 0.0f;
             Thread.Sleep(100);
         }
         if (Input.GetKey(KeyCode.JoystickButton1) && textDistractions[1].activeSelf == true){
             Debug.Log(BButtonPressed);
             TaskWriter(AuditoryButtonResponse,responseTime.ToString(),globalActivityTimer.ToString());
             textDistractions[1].SetActive(false);
+            isTaskCurrentlyHappening = false;
+            nextTaskTimer = 0.0f;
             Thread.Sleep(100);
         }
         if (Input.GetKey(KeyCode.JoystickButton2) && textDistractions[2].activeSelf == true){
             Debug.Log(XButtonPressed);
             TaskWriter(AuditoryButtonResponse,responseTime.ToString(),globalActivityTimer.ToString());
             textDistractions[2].SetActive(false);
+            isTaskCurrentlyHappening = false;
+            nextTaskTimer = 0.0f;
             Thread.Sleep(100);
         }
         if (Input.GetKey(KeyCode.JoystickButton3) && textDistractions[3].activeSelf == true){
             Debug.Log(YButtonPressed);
             TaskWriter(AuditoryButtonResponse,responseTime.ToString(),globalActivityTimer.ToString());
             textDistractions[3].SetActive(false);
+            isTaskCurrentlyHappening = false;
+            nextTaskTimer = 0.0f;
             Thread.Sleep(100);
         }
     }

@@ -11,6 +11,10 @@ TagManager:
   - Clock
   - AudioDistraction
   - Instructions
+  - SoundEffects
+  - CrashedTextTag
+  - CloseEyes
+  - OpenEyes
   layers:
   - Default
   - TransparentFX
