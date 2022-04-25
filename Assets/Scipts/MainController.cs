@@ -5,21 +5,19 @@ using UnityEngine;
 
 public class MainController : MonoBehaviour
 {
-    private const float MaximumAcceleration = 18f;
+    private const float MaximumAcceleration = 12f;
     private const float MinimumAcceleration = 0.5f;
     private const float AccelerationGain = 0.1f;
     private const float RightBarricade = 20f;
     private const float LeftBarricade = -3f;
     private const float ManualInputVelocity = 0.3f;
 
-    private int currentSpeed;
     private float currentAcceleration;
     public static bool IsObjectAccelerating;
     
     // Start is called before the first frame update
     public void Start()
     {
-        currentSpeed = 0;
         currentAcceleration = 3;
     }
 
@@ -63,26 +61,30 @@ public class MainController : MonoBehaviour
         //Decceleratting
         if ((Input.GetKey(KeyCode.DownArrow)) || (Input.GetKey(KeyCode.S)) || Input.GetAxis("Vertical")<0)
         {
-            if (currentAcceleration >= 0){
+            if (currentAcceleration > 0){
                 currentAcceleration = currentAcceleration - AccelerationGain;
             }
-        }
-
-
-        if((Input.GetKey(KeyCode.Space))){
-            if (!IsObjectAccelerating){
-                Debug.Log("Accelerating");
-                Thread.Sleep(100);
-                IsObjectAccelerating = true;
-                currentAcceleration = 3f;
-            }
-            else{
-                Debug.Log("Breaking");
-                Thread.Sleep(100);
+            else
+            {
                 IsObjectAccelerating = false;
-                currentAcceleration = 0;
             }
         }
+
+
+        // if((Input.GetKey(KeyCode.Space))){
+        //     if (!IsObjectAccelerating){
+        //         Debug.Log("Accelerating");
+        //         Thread.Sleep(100);
+        //         IsObjectAccelerating = true;
+        //         currentAcceleration = 3f;
+        //     }
+        //     else{
+        //         Debug.Log("Breaking");
+        //         Thread.Sleep(100);
+        //         IsObjectAccelerating = false;
+        //         currentAcceleration = 0;
+        //     }
+        // }
 
         CurrentPlayerMovement();
     }
