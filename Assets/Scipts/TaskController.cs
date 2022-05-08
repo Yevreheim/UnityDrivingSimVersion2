@@ -44,6 +44,7 @@ public class TaskController : MonoBehaviour
     private float globalActivityTimer;
     private float nextTaskTimer;
     private float defaultCurrentPlayerPositionX;
+    private float secondTaskTimer;
 
     private string fileExportName;
     private string fileExportLocation;
@@ -60,13 +61,14 @@ public class TaskController : MonoBehaviour
     private bool isTaskCurrentlyHappening;
     private bool signalForVisualBalloonTask;
     private bool signalForEmergencyBraking;
+    private bool signalSecondTask;
 
     private StreamWriter fileStreamWriter;
     private StreamReader fileStreamReader;
     private List<Planes> horizontalPlaneList;
-
     private TaskCounter taskCounterController;
     private TaskEnum currentTaskEnum;
+    private SecondaryTaskEnum secondaryTask;
     private GameObject[] textDistractions;
     private GameObject[] lanes;
     private GameObject[] audioSources;
@@ -104,7 +106,7 @@ public class TaskController : MonoBehaviour
         TaskCarMovementPlayerResponse();
         TextDistractionPlayerResponse();
         BalloonVisualDistractionResponse();
-
+        EnableSecondTask();
         CommenceProgram();
     }
 
@@ -161,7 +163,6 @@ public class TaskController : MonoBehaviour
                 else if (task == taskCounterController.DualTaskLaneDeviationVisualBackward){
                     signalForVisualBalloonTask = true;
                     SecondaryTaskPush(SecondaryTaskEnum.LaneDeviation);
-
                 }
                 else if (task == taskCounterController.DualTaskLaneDeviationAuditoryForward){
                     EnableLaneDeviationDistraction();
@@ -212,22 +213,36 @@ public class TaskController : MonoBehaviour
   
     }
 
-    private void SecondaryTaskPush(SecondaryTaskEnum taskEnum){
-        if (taskEnum == SecondaryTaskEnum.Auditory)
-        {
+    private void SecondaryTaskPush(SecondaryTaskEnum taskEnum)
+    {
+        secondTaskTimer = 0.0f;
+        signalSecondTask = true;
+        secondaryTask = taskEnum;
+    }
 
-        }
-        else if (taskEnum == SecondaryTaskEnum.Visual)
+    private void EnableSecondTask()
+    {
+        if (signalSecondTask)
         {
-
-        }
-        else if (taskEnum == SecondaryTaskEnum.LaneDeviation)
-        {
-
-        }
-        else if (taskEnum == SecondaryTaskEnum.EmergencyBraking)
-        {
-
+            if (secondTaskTimer > 0.4f){
+                if (secondaryTask == SecondaryTaskEnum.Auditory)
+                {
+                    EnableAudioDistraction();
+                }
+                else if (secondaryTask == SecondaryTaskEnum.Visual)
+                {
+                    signalForVisualBalloonTask = true;
+                }
+                else if (secondaryTask == SecondaryTaskEnum.LaneDeviation)
+                {
+                    EnableLaneDeviationDistraction();
+                }
+                else if (secondaryTask == SecondaryTaskEnum.EmergencyBraking)
+                {
+                    signalForEmergencyBraking = true;
+                }
+                signalSecondTask = false;
+            }              
         }
     }
 
@@ -358,6 +373,7 @@ public class TaskController : MonoBehaviour
         globalActivityTimer = 0.0f;
         responseTime = 0.0f;
         nextTaskTimer = 0.0f;
+        secondTaskTimer = 0.0f;
         clockUiObject = GameObject.FindWithTag("Clock");
         clockUiObject.SetActive(false);
     }
@@ -415,6 +431,7 @@ public class TaskController : MonoBehaviour
         globalActivityTimer += Time.deltaTime;
         responseTime += Time.deltaTime;
         nextTaskTimer += Time.deltaTime;
+        secondTaskTimer += Time.deltaTime;
     }
 
     private void UpdateInstructions(){
